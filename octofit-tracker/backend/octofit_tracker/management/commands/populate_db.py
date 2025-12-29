@@ -1,12 +1,14 @@
+
 from django.core.management.base import BaseCommand
 from octofit_tracker.models import User, Team, Activity, Workout, Leaderboard
 from django.utils import timezone
+from djongo import connection
 
 class Command(BaseCommand):
-    help = 'Populate the octofit_db database with test data'
+    help = 'Populate the octofit_db database with test data.'
 
     def handle(self, *args, **options):
-        # Clear existing data
+        # Clear existing data for all collections
         Leaderboard.objects.all().delete()
         Activity.objects.all().delete()
         Workout.objects.all().delete()
@@ -43,4 +45,8 @@ class Command(BaseCommand):
         Leaderboard.objects.create(user=users[2], score=110)
         Leaderboard.objects.create(user=users[3], score=95)
 
-        self.stdout.write(self.style.SUCCESS('Test data populated successfully.'))
+        # Ensure unique index on email for users collection
+        db = connection.cursor().db_conn.client['octofit_db']
+        db.users.create_index('email', unique=True)
+
+        self.stdout.write(self.style.SUCCESS('Test data for users, teams, activities, workouts, and leaderboard populated successfully.'))
